@@ -1,35 +1,66 @@
-import { Controller } from '@nestjs/common';
-import { MessagePattern, Payload } from '@nestjs/microservices';
-import { UserServiceService } from '../../user-service.service';
-import { CreateUserServiceDto } from '../../dto/create-user-service.dto';
-import { UpdateUserServiceDto } from '../../dto/update-user-service.dto';
+import {
+Post,
+Body,
+Get,
+Param,
+Patch,
+Delete,
+UseGuards,
+Req,
+HttpCode,
+HttpStatus,
+Logger,
+Controller,
+} from '@nestjs/common';
 
-@Controller()
-export class UserServiceController {
-  constructor(private readonly userServiceService: UserServiceService) {}
+import { CreateUserDto } from './dto/create-user.dto';
+import { UpdateUserDto } from './dto/update-user.dto';
+import { Roles } from '../common/decorators/roles.decorator';
+import { RolesGuard } from '../common/guards/roles.guard';
+import { UserService } from './user-service.service';
+import { JwtAuthGuard } from '../auth/guard/auth.guard';
 
-  @MessagePattern('createUserService')
-  create(@Payload() createUserServiceDto: CreateUserServiceDto) {
-    return this.userServiceService.create(createUserServiceDto);
-  }
 
-  @MessagePattern('findAllUserService')
-  findAll() {
-    return this.userServiceService.findAll();
-  }
+@Controller('users')
+export class UserController {
+private readonly logger = new Logger(UserController.name);
+constructor(private readonly userService: UserService) {}
 
-  @MessagePattern('findOneUserService')
-  findOne(@Payload() id: number) {
-    return this.userServiceService.findOne(id);
-  }
 
-  @MessagePattern('updateUserService')
-  update(@Payload() updateUserServiceDto: UpdateUserServiceDto) {
-    return this.userServiceService.update(updateUserServiceDto.id, updateUserServiceDto);
-  }
+@Post('register')
+@HttpCode(HttpStatus.CREATED)
+async register(@Body() dto: CreateUserDto) {
+this.logger.log(`register attempt: ${dto.email}`);
+return this.userService.create(dto);
+}
 
-  @MessagePattern('removeUserService')
-  remove(@Payload() id: number) {
-    return this.userServiceService.remove(id);
-  }
+
+@UseGuards(JwtAuthGuard, RolesGuard)
+@Roles('admin')
+@Get()
+async getAll() {
+return this.userService.findAll();
+}
+
+
+@UseGuards(JwtAuthGuard)
+@Get(':id')
+async getById(@Param('id') id: string) {
+return this.userService.findById(id);
+}
+
+
+@UseGuards(JwtAuthGuard)
+@Patch(':id')
+async update(@Param('id') id: string, @Body() dto: UpdateUserDto) {
+return this.userService.update(id, dto);
+}
+
+
+@UseGuards(JwtAuthGuard, RolesGuard)
+@Roles('admin')
+@Delete(':id')
+async remove(@Param('id') id: string) {
+return this.userService.remove(id);
+}
 }
