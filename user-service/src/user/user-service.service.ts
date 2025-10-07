@@ -36,7 +36,7 @@ export class UserService {
       const user = this.userRepo.create({ name, email, password: hashed });
       const saved = await this.userRepo.save(user);
 
-      const { password: _pw, ...result } = saved as unknown as UserEntity;
+      const { password: psw, ...result } = saved as unknown as UserEntity;
       return result;
     } catch (error) {
       this.logger.error('create user failed', error);
@@ -49,12 +49,12 @@ export class UserService {
   async findAll(): Promise<Omit<UserEntity, 'password'>[]> {
     try {
       const users = await this.userRepo.find();
-      return users.map((user: any) => {
+      return users.map((user: UserEntity) => {
         const { password, ...rest } = user as unknown as UserEntity;
         return rest;
       });
     } catch (error) {
-      this.logger.error('findAll failed', error );
+      this.logger.error('findAll failed', error);
       throw new HttpException('Internal server error', HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
@@ -89,7 +89,6 @@ if (dto.password) {
 const salt = await bcrypt.genSalt(12);
 user.password = await bcrypt.hash(dto.password, salt);
 }
-
 
 user.name = dto.name ?? user.name;
 user.email = dto.email ?? user.email;
