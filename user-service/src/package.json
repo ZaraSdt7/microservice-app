@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "scripts": {
     "start:dev": "nest start --watch",
-    "start": "node dist/main.js",
+    "start": "npm run start:prod",
     "build": "nest build"
   },
   "dependencies": {
@@ -33,7 +33,7 @@
     "typeorm": "^0.3.17"
   },
   "description": "",
-  "main": "index.js",
+  "main": "main.ts",
   "keywords": [],
   "author": "",
   "license": "ISC",
