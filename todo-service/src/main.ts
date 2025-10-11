@@ -1,39 +1,47 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
-import { ValidationPipe, Logger } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import { Logger, ValidationPipe } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule, { cors: true });
+  const app = await NestFactory.create(AppModule, { logger: false });
   const logger = new Logger('Bootstrap');
+  const configService = app.get(ConfigService);
 
-  app.useGlobalFilters(new AllExceptionsFilter());
-
+  const globalPrefix = 'api';
+  app.setGlobalPrefix(globalPrefix);
   app.useGlobalPipes(
     new ValidationPipe({
-      whitelist: true,
+      whitelist: true, 
       forbidNonWhitelisted: true,
       transform: true,
     }),
   );
 
+  app.useGlobalFilters(new AllExceptionsFilter());
 
-  const config = new DocumentBuilder()
-    .setTitle('Todo Microservice API')
-    .setDescription('Todo Management Service built with NestJS & PostgreSQL')
+  // Swagger Setup
+  const swaggerConfig = new DocumentBuilder()
+    .setTitle('Todo Microservice')
+    .setDescription('Todo management microservice API documentation')
     .setVersion('1.0')
-    .addBearerAuth()
+    .addTag('todos')
     .build();
 
-  const document = SwaggerModule.createDocument(app, config);
+  const document = SwaggerModule.createDocument(app, swaggerConfig);
   SwaggerModule.setup('api/docs', app, document);
 
-  const port = process.env.PORT || 3001;
+  app.enableCors({
+    origin: configService.get<string>('CORS_ORIGIN') || '*',
+  });
+
+  const port = configService.get<number>('PORT') || 3000;
   await app.listen(port);
 
-  logger.log(` Todo Service is running on: http://localhost:${port}`);
-  logger.log(` Swagger Docs available at: http://localhost:${port}/api/docs`);
+  logger.log(` Todo Service running on http://localhost:${port}/${globalPrefix}`);
+  logger.log(` Swagger docs available at http://localhost:${port}/api/docs`);
 }
 
 bootstrap();

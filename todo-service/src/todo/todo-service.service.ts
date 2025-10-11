@@ -1,5 +1,4 @@
 import { Injectable, Logger, NotFoundException, InternalServerErrorException } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { TodoEntity } from './entities/todo.entity';
 import { CreateTodoDto } from './dto/create-todo.dto';
@@ -11,6 +10,7 @@ import { ResponseBuilder } from '../common/utils/response-builder';
 
 import { MESSAGE_CONSTANTS } from '../common/filters/constants';
 import { IResponse } from '../common/interface/response.interface';
+import { InjectRepository } from '@nestjs/typeorm';
 
 @Injectable()
 export class TodoService implements ITodo {

@@ -2,8 +2,9 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { TodoModule } from './todo/todo.module';
-import { TodoEntity } from './todo/todo.entity';
+import { TodoEntity } from './todo/entities/todo.entity';
+import { TodoModule } from './todo/todo-service.module';
+
 
 @Module({
   imports: [
@@ -21,7 +22,7 @@ import { TodoEntity } from './todo/todo.entity';
         username: process.env.DB_USERNAME,
         password: process.env.DB_PASSWORD,
         database: process.env.DB_NAME,
-        entities: [TodoEntity],
+        entities: [ TodoEntity ],
         synchronize: process.env.NODE_ENV === 'development',
         logging: process.env.NODE_ENV === 'development',
         ssl:
