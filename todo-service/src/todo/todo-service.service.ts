@@ -1,4 +1,4 @@
-import { Injectable, Logger, NotFoundException, InternalServerErrorException } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException, InternalServerErrorException, OnModuleInit } from '@nestjs/common';
 import { Repository } from 'typeorm';
 import { TodoEntity } from './entities/todo.entity';
 import { CreateTodoDto } from './dto/create-todo.dto';
@@ -7,26 +7,46 @@ import { FilterTodoDto } from './dto/filter-todo.dto';
 import { ITodo } from '../common/interface/todo.interface';
 import { IPaginationResult } from '../common/interface/pagination.interface';
 import { ResponseBuilder } from '../common/utils/response-builder';
-
 import { MESSAGE_CONSTANTS } from '../common/filters/constants';
 import { IResponse } from '../common/interface/response.interface';
 import { InjectRepository } from '@nestjs/typeorm';
+import { ClientProxy, ClientProxyFactory, Transport } from '@nestjs/microservices';
 
 @Injectable()
-export class TodoService implements ITodo {
+export class TodoService implements ITodo, OnModuleInit {
   private readonly logger = new Logger(TodoService.name);
+  private client: ClientProxy;
 
   constructor(
     @InjectRepository(TodoEntity)
     private readonly todoRepo: Repository<TodoEntity>,
   ) {}
- 
+
+  onModuleInit() {
+    // connect to RabbitMQ
+    this.client = ClientProxyFactory.create({
+      transport: Transport.RMQ,
+      options: {
+        urls: [process.env.RMQ_URL || 'amqp://guest:guest@localhost:5672'],
+        queue: 'notifications_queue',
+        queueOptions: { durable: true },
+      },
+    });
+  }
 
   async create(dto: CreateTodoDto): Promise<IResponse<TodoEntity>> {
     try {
       const todo = this.todoRepo.create(dto);
       const saved = await this.todoRepo.save(todo);
       this.logger.log(`✅ Created Todo: ${saved.title}`);
+
+     //Send notification via RabbitMQ 
+      this.client.emit('task.created', {
+        type: 'email',
+        recipient: dto.userId, // Assuming userId is the recipient's identifier
+        message: `New task created: ${saved.title}`,
+      });
+
       return ResponseBuilder.success(saved, MESSAGE_CONSTANTS.TODO_CREATED);
     } catch (error) {
       this.logger.error('Error creating Todo', error.stack);
@@ -36,7 +56,7 @@ export class TodoService implements ITodo {
 
   async findAll(filter?: FilterTodoDto): Promise<IResponse<IPaginationResult<TodoEntity>>> {
     try {
-      const { search, isCompleted, page = 1, limit = 10 } = filter;
+      const { search, isCompleted, page = 1, limit = 10 } = filter || {};
       const query = this.todoRepo.createQueryBuilder('todo');
 
       if (search) {
