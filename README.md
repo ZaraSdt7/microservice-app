@@ -1,6 +1,4 @@
-Sure! Here's a **professional, clean, and fully detailed README in English** for your project in Markdown format:
 
----
 
 # 📝 Todo Microservices App
 
@@ -102,7 +100,7 @@ docker-compose up -d
 DB_HOST=localhost
 DB_PORT=5432
 DB_USER=nestuser
-DB_PASSWORD=nestpassword
+DB_PASSWORD=
 DB_NAME=todo_app
 ```
 
