@@ -1,7 +1,3 @@
-Sure! Here's a **professional, clean, and fully detailed README in English** for your project in Markdown format:
-
----
-
 # 📝 Todo Microservices App
 
 A **NestJS-based Todo Application** built with a microservices architecture, focusing on **security**, **scalability**, and **best programming practices**.
