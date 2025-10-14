@@ -1,5 +1,3 @@
-
-
 # 📝 Todo Microservices App
 
 A **NestJS-based Todo Application** built with a microservices architecture, focusing on **security**, **scalability**, and **best programming practices**.
